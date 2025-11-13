@@ -1,5 +1,10 @@
 import { useState } from 'react';
 
+/**
+ * Square: Represents a button in the Board
+ *  - Recieve the value (X, O or null)
+ *  - highlight: highlights the square if it belongs to the winner line
+ */
 function Square({value, onSquareClick, highlight}){
   return(
     <button 
@@ -10,14 +15,45 @@ function Square({value, onSquareClick, highlight}){
     );
 }
 
-function OrderButton({currentOrder, onToggleClick}){
+/**
+ * ToggleOrderButton: Represents a Button that changes the order of move history buttons
+ */
+function ToggleOrderButton({currentOrder, onToggleClick}){
   return(
     <button onClick={onToggleClick}>
       Current Order: {currentOrder}
     </button>
   );
 }
-
+/**
+ * Game
+ * 
+ * Root component of the application
+ * 
+ * Responsabilities:
+ * -  Manages the full game state (hsitory of moves, current move, turn order, and sorting)
+ * - Renders the <Board> component and passes down props for interactivity
+ * - Handles user interactions:
+ *    - handlePlay(): updats history and active move after each turn
+ *    - jumpTo(): allows time travel to a previous move
+ *    - toggleOrder(): toggles the order of the move history (ascending/descending)
+ * - Displays the move history list with coordinates and move navigation
+ * 
+ * State structure:
+ *  history: [
+ *    {
+ *      squares: Array(9)           //current board configuration
+ *      moveLocation: { row, col }  //last move position
+ *    },
+ *    ...
+ *  ]
+ *  currentMove: number             //index of the active move in history
+ *  order: "asc" | "desc"           //determines list sorting order
+ * 
+ * Children:
+ * - <Board />: renders the 3x3 and triggers onPlay() when a move occurs
+ * - <OrderButton />: toggles the move list order
+ */
 export default function Game(){
   const [history, setHistory] = useState([{ squares: Array(9).fill(null), moveLocation: null }]);
   const [currentMove, setCurrentMove] = useState(0);
@@ -40,7 +76,7 @@ export default function Game(){
   }
 
   function toggleOrder(){
-    order === "asc" ? setOrder("desc") : setOrder("asc");
+    setOrder(prev => (prev === "asc" ? "desc" : "asc"));
   }
 
   const moves = history.map((step, move) => {
@@ -57,9 +93,9 @@ export default function Game(){
       description = 'Go to game start';
     }
     return (
-      <ul key={move}>
+      <li key={move}>
         <button onClick={() => jumpTo(move)}>{description}</button>
-      </ul>
+      </li>
     );
   });
 
@@ -71,12 +107,43 @@ export default function Game(){
         <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />  
       </div>
       <div className="game-info">
-        <OrderButton currentOrder={order} onToggleClick={toggleOrder}/>
+        <ToggleOrderButton currentOrder={order} onToggleClick={toggleOrder}/>
         <ol>{displayedMoves}</ol>
       </div>
     </div>
   );
 }
+
+/**
+ * Board
+ * 
+ * Represents the 3x3 game board
+ * 
+ * Responsabilities:
+ * - Renders nine <Square /> components in a 3x3 grid
+ * - Handles user interactions via handleClick():
+ *    - Prevents moves on occupied squares or after a win
+ *    - Calculates the next player and updates the board
+ *    - Reports the new board state and move coordinates back to <Game />
+ * - Displays the current game status
+ * - Highlights the winning line when a player wins
+ * 
+ * Props:
+ *  squares: Array(9)             //Current board configuration
+ *  onPlay(nextSquares, row, col) //callback to update game state in <Game />
+ * 
+ * Internal behaviour:
+ * - Uses calculateWinner(squares) to determine if there's a winner
+ * - COmputes isDraw when all squares are filled and no winner exists
+ * - Builds boardRows dynamically with nested loops for flexibility
+ * 
+ * Children:
+ * - <Square />: individual clickable cells that display 'X', 'O' or remain empty
+ * 
+ * This component focuses purely on rendering logic and user interaction within the board
+ * 
+ * 
+ */
 
 function Board({xIsNext, squares, onPlay}) {
 
