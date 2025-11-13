@@ -71,6 +71,12 @@ body {
   width: 34px;
 }
 
+.square.highlight {
+  background-color: gold;
+  font-weight: bold;
+}
+
+
 .board-row:after {
   clear: both;
   content: '';
